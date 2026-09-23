@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivo - Medidor de Sinal Wi-Fi Nativo</title>
+    <style>
+        :root {
+            --vivo-purple: #660099;
+            --vivo-purple-dark: #4b0070;
+            --vivo-accent: #eb3573;
+            --bg-gray: #f4f4f7;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-gray);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        header {
+            background: var(--vivo-purple);
+            color: white;
+            padding: 24px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        header p {
+            font-size: 13px;
+            opacity: 0.85;
+        }
+
+        .content {
+            padding: 24px 20px;
+        }
+
+        /* Cartão de Informação da Rede */
+        .network-info {
+            background: #f0e6f5;
+            border-left: 4px solid var(--vivo-purple);
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .network-info label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--vivo-purple-dark);
+            font-weight: bold;
+            display: block;
+        }
+
+        .network-info .ssid-name {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--vivo-purple);
+            margin-top: 2px;
+            word-break: break-all;
+        }
+
+        /* Badge de Banda Detectada (2.4G vs 5G) */
+        .band-badge {
+            display: inline-block;
+            background: var(--vivo-purple);
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        /* Display Principal */
+        .gauge-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .percentage-display {
+            font-size: 54px;
+            font-weight: 800;
+            color: var(--vivo-purple);
+            line-height: 1;
+        }
+
+        .percentage-display span {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .dbm-display {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        /* Barras do Sinal Vivo */
+        .signal-bars {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 8px;
+            height: 50px;
+            margin: 20px 0;
+        }
+
+        .bar {
+            width: 14px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            transition: background-color 0.3s ease, height 0.3s ease;
+        }
+
+        .bar:nth-child(1) { height: 20%; }
+        .bar:nth-child(2) { height: 40%; }
+        .bar:nth-child(3) { height: 60%; }
+        .bar:nth-child(4) { height: 80%; }
+        .bar:nth-child(5) { height: 100%; }
+
+        .bar.active {
+            background-color: var(--vivo-purple);
+        }
+
+        /* Grid de Informações Detalhadas */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        .detail-card {
+            background: #fafafa;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .detail-card .val {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text-main);
+        }
+
+        .detail-card .lbl {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Botão */
+        .btn-measure {
+            width: 100%;
+            background: var(--vivo-purple);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+
+        .btn-measure:hover {
+            background: var(--vivo-purple-dark);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Meu Wi-Fi Vivo</h1>
+        <p>Medidor Nativo de Potência e Frequência</p>
+    </header>
+
+    <div class="content">
+        <!-- Informação do Nome da Rede Detectada -->
+        <div class="network-info">
+            <label>Rede Wi-Fi Conectada</label>
+            <div class="ssid-name" id="ssidDisplay">A ler dados da rede...</div>
+        </div>
+
+        <div style="text-align: center;">
+            <span class="band-badge" id="bandBadge">A detetar banda...</span>
+        </div>
+
+        <!-- Exibição da Medição -->
+        <div class="gauge-container">
+            <div class="percentage-display"><span id="pctValue">000.0</span><span>%</span></div>
+            <div class="dbm-display">Potência Real: <strong id="dbmValue">0.0 dBm</strong></div>
+            
+            <!-- Barras Graficas -->
+            <div class="signal-bars">
+                <div class="bar" id="b1"></div>
+                <div class="bar" id="b2"></div>
+                <div class="bar" id="b3"></div>
+                <div class="bar" id="b4"></div>
+                <div class="bar" id="b5"></div>
+            </div>
+        </div>
+
+        <!-- Detalhes Precisos de Hardware -->
+        <div class="details-grid">
+            <div class="detail-card">
+                <div class="val" id="freqValue">-- MHz</div>
+                <div class="lbl">Frequência</div>
+            </div>
+            <div class="detail-card">
+                <div class="val" id="linkSpeedValue">-- Mbps</div>
+                <div class="lbl">Velocidade Link</div>
+            </div>
+            <div class="detail-card">
+                <div class="val" id="pingValue">-- ms</div>
+                <div class="lbl">Latência (Ping)</div>
+            </div>
+            <div class="detail-card">
+                <div class="val" id="statusValue">--</div>
+                <div class="lbl">Qualidade</div>
+            </div>
+        </div>
+
+        <button class="btn-measure" onclick="readWifiData()">Atualizar Medição</button>
+    </div>
+</div>
+
+<script>
+    // Converte a potência dBm (de -100 dBm até -30 dBm) para percentagem de 3 dígitos (000.0% a 100.0%)
+    function dbmToPercentage(dbm) {
+        if (dbm <= -100) return 0;
+        if (dbm >= -30) return 100;
+        return ((dbm + 100) * 100) / 70;
+    }
+
+    // Atualiza os elementos gráficos da página
+    function updateUI(ssid, dbm, frequency, linkSpeed, ping) {
+        document.getElementById('ssidDisplay').innerText = ssid || "Desconhecida / Sem Acesso";
+
+        // Calcula a percentagem exata com 1 casa decimal e preenche até 3 dígitos (ex: 085.4%)
+        let pct = dbmToPercentage(dbm);
+        document.getElementById('pctValue').innerText = pct.toFixed(1).padStart(5, '0');
+        document.getElementById('dbmValue').innerText = dbm.toFixed(1) + " dBm";
+        document.getElementById('pingValue').innerText = ping + " ms";
+        document.getElementById('linkSpeedValue').innerText = (linkSpeed > 0 ? linkSpeed : "--") + " Mbps";
+        
+        if (frequency > 0) {
+            document.getElementById('freqValue').innerText = frequency + " MHz";
+            if (frequency >= 4900) {
+                document.getElementById('bandBadge').innerText = "Rede 5.0 GHz (" + frequency + " MHz)";
+            } else {
+                document.getElementById('bandBadge').innerText = "Rede 2.4 GHz (" + frequency + " MHz)";
+            }
+        } else {
+            document.getElementById('freqValue').innerText = "-- MHz";
+            document.getElementById('bandBadge').innerText = "Frequência Desconhecida";
+        }
+
+        // Qualidade do Sinal
+        let status = "Excelente";
+        if (pct < 30) status = "Muito Fraco";
+        else if (pct < 50) status = "Fraco";
+        else if (pct < 70) status = "Moderado";
+        else if (pct < 85) status = "Bom";
+        document.getElementById('statusValue').innerText = status;
+
+        // Atualização das Barras do Sinal Vivo
+        const barsCount = Math.ceil(pct / 20);
+        for (let i = 1; i <= 5; i++) {
+            const bar = document.getElementById('b' + i);
+            if (i <= barsCount) {
+                bar.classList.add('active');
+            } else {
+                bar.classList.remove('active');
+            }
+        }
+    }
+
+    // Função principal que comunica com a placa de rede do telemóvel
+    async function readWifiData() {
+        const startTime = performance.now();
+        let ping = 0;
+
+        try {
+            // Medição da latência (Ping)
+            await fetch('https://www.google.com/favicon.ico', { mode: 'no-cors', cache: 'no-cache' });
+            ping = Math.round(performance.now() - startTime);
+        } catch (e) {
+            ping = 999;
+        }
+
+        // Tenta ler o Wi-Fi através da ponte nativa do Capacitor (se instalado no Android)
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Wifi) {
+            try {
+                const wifi = window.Capacitor.Plugins.Wifi;
+                const info = await wifi.getWifiInfo();
+                
+                // Leitura dos dados reais do hardware
+                const ssid = info.ssid ? info.ssid.replace(/"/g, '') : "Wi-Fi Desconhecido";
+                const dbm = parseFloat(info.rssi) || -65.0;
+                const frequency = parseInt(info.frequency) || 2412;
+                const linkSpeed = parseInt(info.linkSpeed) || 72;
+
+                updateUI(ssid, dbm, frequency, linkSpeed, ping);
+                return;
+            } catch (err) {
+                console.warn("Erro ao ler plugin do Wi-Fi nativo:", err);
+            }
+        }
+
+        // Caso o app esteja a rodar apenas no navegador de testes (Simulação)
+        let simulatedDbm = -55.0 - (ping / 15) + (Math.random() * 4 - 2);
+        if (simulatedDbm > -30) simulatedDbm = -30;
+        if (simulatedDbm < -95) simulatedDbm = -95;
+
+        updateUI("Modo Navegador (Instale o APK)", simulatedDbm, 2412, 72, ping);
+    }
+
+    // Leitura automática ao iniciar o app
+    document.addEventListener('DOMContentLoaded', () => {
+        readWifiData();
+        // Atualiza a medição automaticamente a cada 3 segundos
+        setInterval(readWifiData, 3000);
+    });
+</script>
+
+</body>
+</html>
