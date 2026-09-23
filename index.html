@@ -3,7 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vivo - Medidor de Sinal Wi-Fi Nativo</title>
+    <title>Vivo - Medidor de Sinal Wi-Fi</title>
+    
+    <!-- Vínculo com o Manifest e PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#660099">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+    </script>
+
     <style>
         :root {
             --vivo-purple: #660099;
@@ -64,7 +74,6 @@
             padding: 24px 20px;
         }
 
-        /* Cartão de Informação da Rede */
         .network-info {
             background: #f0e6f5;
             border-left: 4px solid var(--vivo-purple);
@@ -90,7 +99,6 @@
             word-break: break-all;
         }
 
-        /* Badge de Banda Detectada (2.4G vs 5G) */
         .band-badge {
             display: inline-block;
             background: var(--vivo-purple);
@@ -102,7 +110,6 @@
             margin-bottom: 15px;
         }
 
-        /* Display Principal */
         .gauge-container {
             text-align: center;
             margin-bottom: 20px;
@@ -127,7 +134,6 @@
             font-weight: 500;
         }
 
-        /* Barras do Sinal Vivo */
         .signal-bars {
             display: flex;
             justify-content: center;
@@ -154,7 +160,6 @@
             background-color: var(--vivo-purple);
         }
 
-        /* Grid de Informações Detalhadas */
         .details-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -182,7 +187,6 @@
             margin-top: 2px;
         }
 
-        /* Botão */
         .btn-measure {
             width: 100%;
             background: var(--vivo-purple);
@@ -211,22 +215,19 @@
     </header>
 
     <div class="content">
-        <!-- Informação do Nome da Rede Detectada -->
         <div class="network-info">
             <label>Rede Wi-Fi Conectada</label>
-            <div class="ssid-name" id="ssidDisplay">A ler dados da rede...</div>
+            <div class="ssid-name" id="ssidDisplay">Lendo dados da rede...</div>
         </div>
 
         <div style="text-align: center;">
-            <span class="band-badge" id="bandBadge">A detetar banda...</span>
+            <span class="band-badge" id="bandBadge">Detectando banda...</span>
         </div>
 
-        <!-- Exibição da Medição -->
         <div class="gauge-container">
             <div class="percentage-display"><span id="pctValue">000.0</span><span>%</span></div>
             <div class="dbm-display">Potência Real: <strong id="dbmValue">0.0 dBm</strong></div>
             
-            <!-- Barras Graficas -->
             <div class="signal-bars">
                 <div class="bar" id="b1"></div>
                 <div class="bar" id="b2"></div>
@@ -236,7 +237,6 @@
             </div>
         </div>
 
-        <!-- Detalhes Precisos de Hardware -->
         <div class="details-grid">
             <div class="detail-card">
                 <div class="val" id="freqValue">-- MHz</div>
@@ -261,18 +261,15 @@
 </div>
 
 <script>
-    // Converte a potência dBm (de -100 dBm até -30 dBm) para percentagem de 3 dígitos (000.0% a 100.0%)
     function dbmToPercentage(dbm) {
         if (dbm <= -100) return 0;
         if (dbm >= -30) return 100;
         return ((dbm + 100) * 100) / 70;
     }
 
-    // Atualiza os elementos gráficos da página
     function updateUI(ssid, dbm, frequency, linkSpeed, ping) {
         document.getElementById('ssidDisplay').innerText = ssid || "Desconhecida / Sem Acesso";
 
-        // Calcula a percentagem exata com 1 casa decimal e preenche até 3 dígitos (ex: 085.4%)
         let pct = dbmToPercentage(dbm);
         document.getElementById('pctValue').innerText = pct.toFixed(1).padStart(5, '0');
         document.getElementById('dbmValue').innerText = dbm.toFixed(1) + " dBm";
@@ -291,7 +288,6 @@
             document.getElementById('bandBadge').innerText = "Frequência Desconhecida";
         }
 
-        // Qualidade do Sinal
         let status = "Excelente";
         if (pct < 30) status = "Muito Fraco";
         else if (pct < 50) status = "Fraco";
@@ -299,7 +295,6 @@
         else if (pct < 85) status = "Bom";
         document.getElementById('statusValue').innerText = status;
 
-        // Atualização das Barras do Sinal Vivo
         const barsCount = Math.ceil(pct / 20);
         for (let i = 1; i <= 5; i++) {
             const bar = document.getElementById('b' + i);
@@ -311,26 +306,22 @@
         }
     }
 
-    // Função principal que comunica com a placa de rede do telemóvel
     async function readWifiData() {
         const startTime = performance.now();
         let ping = 0;
 
         try {
-            // Medição da latência (Ping)
             await fetch('https://www.google.com/favicon.ico', { mode: 'no-cors', cache: 'no-cache' });
             ping = Math.round(performance.now() - startTime);
         } catch (e) {
             ping = 999;
         }
 
-        // Tenta ler o Wi-Fi através da ponte nativa do Capacitor (se instalado no Android)
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Wifi) {
             try {
                 const wifi = window.Capacitor.Plugins.Wifi;
                 const info = await wifi.getWifiInfo();
                 
-                // Leitura dos dados reais do hardware
                 const ssid = info.ssid ? info.ssid.replace(/"/g, '') : "Wi-Fi Desconhecido";
                 const dbm = parseFloat(info.rssi) || -65.0;
                 const frequency = parseInt(info.frequency) || 2412;
@@ -339,11 +330,10 @@
                 updateUI(ssid, dbm, frequency, linkSpeed, ping);
                 return;
             } catch (err) {
-                console.warn("Erro ao ler plugin do Wi-Fi nativo:", err);
+                console.warn("Erro ao ler plugin nativo:", err);
             }
         }
 
-        // Caso o app esteja a rodar apenas no navegador de testes (Simulação)
         let simulatedDbm = -55.0 - (ping / 15) + (Math.random() * 4 - 2);
         if (simulatedDbm > -30) simulatedDbm = -30;
         if (simulatedDbm < -95) simulatedDbm = -95;
@@ -351,10 +341,8 @@
         updateUI("Modo Navegador (Instale o APK)", simulatedDbm, 2412, 72, ping);
     }
 
-    // Leitura automática ao iniciar o app
     document.addEventListener('DOMContentLoaded', () => {
         readWifiData();
-        // Atualiza a medição automaticamente a cada 3 segundos
         setInterval(readWifiData, 3000);
     });
 </script>

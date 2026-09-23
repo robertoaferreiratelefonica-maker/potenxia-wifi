@@ -1,0 +1,21 @@
+{
+  "name": "Meu Wi-Fi Vivo",
+  "short_name": "Wi-Fi Vivo",
+  "description": "Medidor de Sinal Wi-Fi Vivo",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#660099",
+  "theme_color": "#660099",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192/660099/ffffff?text=Vivo",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512/660099/ffffff?text=Vivo",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
