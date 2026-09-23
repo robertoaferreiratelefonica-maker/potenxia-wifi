@@ -1,21 +1,25 @@
 {
+  "id": "com.vivo.wifimedidor",
   "name": "Meu Wi-Fi Vivo",
   "short_name": "Wi-Fi Vivo",
   "description": "Medidor de Sinal Wi-Fi Vivo",
   "start_url": "./index.html",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#660099",
   "theme_color": "#660099",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192/660099/ffffff?text=Vivo",
+      "src": "https://raw.githubusercontent.com/pwa-builder/pwa-starter/main/public/assets/icons/icon_192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "https://via.placeholder.com/512/660099/ffffff?text=Vivo",
+      "src": "https://raw.githubusercontent.com/pwa-builder/pwa-starter/main/public/assets/icons/icon_512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
